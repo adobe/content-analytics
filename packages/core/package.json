@@ -1,0 +1,17 @@
+{
+  "name": "@adobe/content-analytics-core",
+  "version": "1.0.0",
+  "description": "Adobe Content Analytics Core (Internal Package)",
+  "type": "module",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adobe/content-analytics.git",
+    "directory": "packages/core"
+  },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "author": "Adobe Inc.",
+  "license": "Apache-2.0"
+}

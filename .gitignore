@@ -1,0 +1,17 @@
+node_modules
+dist
+distTest
+libEs5
+libEs6
+types
+coverage
+.DS_Store
+*.log
+.eslintcache
+.vscode
+.idea
+.cursor
+.npmrc
+*.tgz
+pnpm-lock.yaml
+yarn.lock

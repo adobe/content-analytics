@@ -1,0 +1,63 @@
+{
+  "name": "@adobe/content-analytics",
+  "version": "1.0.5",
+  "type": "module",
+  "description": "Adobe Content Analytics Library - Standardized collection of content interactions for reporting",
+  "main": "index.js",
+  "module": "packages/core/src/index.js",
+  "types": "types/index.d.ts",
+  "files": [
+    "dist",
+    "index.js",
+    "index.cjs",
+    "packages/core/src",
+    "libEs5",
+    "libEs6",
+    "types",
+    "LICENSE_BANNER"
+  ],
+  "scripts": {
+    "clean": "rimraf dist distTest libEs5 libEs6 types",
+    "lint": "eslint --cache --fix \"*.{js,cjs,mjs,jsx}\" \"{packages/*/src,test,scripts}/**/*.{js,cjs,mjs,jsx}\"",
+    "format": "prettier --write \"*.{html,js,cjs,mjs,jsx}\" \"{packages/*/src,test,scripts}/**/*.{html,js,cjs,mjs,jsx}\"",
+    "types": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "rimraf coverage && vitest run --coverage",
+    "build": "npm run clean && rollup -c --environment STANDALONE,STANDALONE_MIN",
+    "build:watch": "npm run clean && rollup -c --watch --environment STANDALONE",
+    "prepack": "npm run clean && babel packages/core/src -d libEs5 --env-name npmEs5 && babel packages/core/src -d libEs6 --env-name npmEs6 && echo '{\"type\":\"commonjs\"}' > libEs5/package.json && echo '{\"type\":\"module\"}' > libEs6/package.json && npm run types"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adobe/content-analytics.git"
+  },
+  "author": "Adobe Inc.",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.28.3",
+    "@babel/core": "^7.28.5",
+    "@babel/plugin-transform-modules-commonjs": "^7.27.1",
+    "@babel/plugin-transform-template-literals": "^7.27.1",
+    "@babel/preset-env": "^7.28.5",
+    "@rollup/plugin-babel": "^6.1.0",
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@types/node": "^24.9.1",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "happy-dom": "^18.0.1",
+    "prettier": "^3.6.2",
+    "rimraf": "^6.1.0",
+    "rollup": "^4.52.5",
+    "rollup-plugin-license": "^3.6.0",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8"
+  }
+}
