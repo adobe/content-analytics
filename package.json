@@ -1,6 +1,6 @@
 {
   "name": "@adobe/content-analytics",
-  "version": "1.0.5",
+  "version": "1.0.0",
   "type": "module",
   "description": "Adobe Content Analytics Library - Standardized collection of content interactions for reporting",
   "main": "index.js",
@@ -32,6 +32,17 @@
     "type": "git",
     "url": "git+https://github.com/adobe/content-analytics.git"
   },
+  "homepage": "https://github.com/adobe/content-analytics#readme",
+  "bugs": "https://github.com/adobe/content-analytics/issues",
+  "keywords": [
+    "adobe",
+    "content-analytics",
+    "aep",
+    "alloy",
+    "tracking",
+    "analytics",
+    "experience-platform"
+  ],
   "author": "Adobe Inc.",
   "license": "Apache-2.0",
   "publishConfig": {

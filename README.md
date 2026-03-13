@@ -1,6 +1,10 @@
 # @adobe/content-analytics
 
-Tracks content interactions (page views, asset views, clicks, scroll depth) and sends them to Adobe Experience Platform via Alloy SDK.
+[![Build](https://github.com/adobe/content-analytics/actions/workflows/build.yml/badge.svg)](https://github.com/adobe/content-analytics/actions/workflows/build.yml)
+[![npm](https://img.shields.io/bundlephobia/min/@adobe/content-analytics?logo=Adobe&style=flat-square)](https://www.npmjs.com/package/@adobe/content-analytics)
+[![npm](https://img.shields.io/bundlephobia/minzip/@adobe/content-analytics?logo=Adobe&style=flat-square)](https://www.npmjs.com/package/@adobe/content-analytics)
+
+Adobe Content Analytics Library — standardized collection of content interactions (page views, asset views, clicks, scroll depth) for reporting. Sends events to Adobe Experience Platform via [Alloy Web SDK](https://experienceleague.adobe.com/docs/experience-platform/web-sdk/home.html).
 
 ## Installation
 
