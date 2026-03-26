@@ -24,6 +24,7 @@ export default class DataCollection {
     this.alloyContentEvent = alloyContentEvent;
     this.contentObservers = contentObservers;
     this.includeExperiences = includeExperiences;
+    this.experienceIDAtLastReset = this.experience.experienceID.value;
 
     if (throttleSendContentEvent) {
       logDebug("Throttling sendContentEvent", throttleSendContentEvent);
@@ -38,6 +39,15 @@ export default class DataCollection {
   }
 
   sendContentEvent(xdm = {}) {
+    if (this.experience.experienceID.value !== this.experienceIDAtLastReset) {
+      logDebug(
+        "Experience changed since last reset, clearing stale assets",
+        this.experienceIDAtLastReset,
+        "->",
+        this.experience.experienceID.value,
+      );
+      this.reset();
+    }
     if (this.shouldTrack) {
       this.alloyContentEvent.sendContentEvent(this.track, xdm);
       this.resetMetrics();
@@ -66,14 +76,16 @@ export default class DataCollection {
     });
     window.history.pushState = new Proxy(window.history.pushState, {
       apply: (target, thisArg, argArray) => {
-        onURLChange(new URL(argArray[2], window.location));
-        return target.apply(thisArg, argArray);
+        const result = target.apply(thisArg, argArray);
+        onURLChange(new URL(window.location));
+        return result;
       },
     });
     window.history.replaceState = new Proxy(window.history.replaceState, {
       apply: (target, thisArg, argArray) => {
-        onURLChange(new URL(argArray[2], window.location));
-        return target.apply(thisArg, argArray);
+        const result = target.apply(thisArg, argArray);
+        onURLChange(new URL(window.location));
+        return result;
       },
     });
     // on visibility change
@@ -86,7 +98,15 @@ export default class DataCollection {
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     document.addEventListener("pagehide", onVisibilityHide);
-    document.addEventListener("pageshow", onVisibilityShow);
+    document.addEventListener("pageshow", (event) => {
+      if (event.persisted) {
+        logDebug("Page restored from bfcache, resetting to avoid stale assets");
+        this.reset();
+        this.contentObservers.registerObservers(true);
+      } else {
+        onVisibilityShow();
+      }
+    });
     // on close
     window.addEventListener("beforeunload", onVisibilityHide);
   }
@@ -96,7 +116,8 @@ export default class DataCollection {
     this.contentObservers.cleanupObservers();
     this.experience.reset();
     this.assets.reset();
-    this.contentObservers.registerObservers();
+    this.contentObservers.registerObservers(false);
+    this.experienceIDAtLastReset = this.experience.experienceID.value;
   }
 
   resetMetrics() {

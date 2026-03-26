@@ -63,17 +63,31 @@ export const getElementAbsoluteOffset = (el) => {
 
 export const getScrollPercentageDepth = () => {
   const documentElement = document.documentElement;
-  const body = document.body;
+  const body = document.body || {};
+  const scrollableHeight =
+    (documentElement.scrollHeight || body.scrollHeight || 0) -
+    documentElement.clientHeight;
   const verticalPercentageDepth =
-    ((documentElement.scrollTop || body.scrollTop) /
-      ((documentElement.scrollHeight || body.scrollHeight) -
-        documentElement.clientHeight)) *
-      100 || 0;
+    scrollableHeight <= 0
+      ? 100
+      : ((window.pageYOffset ||
+          documentElement.scrollTop ||
+          body.scrollTop ||
+          0) /
+          scrollableHeight) *
+          100 || 0;
+  const scrollableWidth =
+    (documentElement.scrollWidth || body.scrollWidth || 0) -
+    documentElement.clientWidth;
   const horizontalPercentageDepth =
-    ((documentElement.scrollLeft || body.scrollLeft) /
-      ((documentElement.scrollWidth || body.scrollWidth) -
-        documentElement.clientWidth)) *
-      100 || 0;
+    scrollableWidth <= 0
+      ? 100
+      : ((window.pageXOffset ||
+          documentElement.scrollLeft ||
+          body.scrollLeft ||
+          0) /
+          scrollableWidth) *
+          100 || 0;
   return {
     verticalPercentageDepth: clampPercentage(verticalPercentageDepth, 0, 100),
     horizontalPercentageDepth: clampPercentage(
@@ -86,12 +100,12 @@ export const getScrollPercentageDepth = () => {
 
 export const getScrollPixelDepth = () => {
   const documentElement = document.documentElement;
-  const body = document.body;
+  const body = document.body || {};
   const verticalPixelDepth =
-    (documentElement.scrollTop || body.scrollTop) +
+    (window.pageYOffset || documentElement.scrollTop || body.scrollTop || 0) +
     documentElement.clientHeight;
   const horizontalPixelDepth =
-    (documentElement.scrollLeft || body.scrollLeft) +
+    (window.pageXOffset || documentElement.scrollLeft || body.scrollLeft || 0) +
     documentElement.clientWidth;
   return { verticalPixelDepth, horizontalPixelDepth };
 };

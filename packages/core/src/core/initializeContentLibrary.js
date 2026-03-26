@@ -102,7 +102,7 @@ const buildExperienceConfigurations = (configurations) => {
   }));
 };
 
-export default function initializeContentLibrary(options) {
+export default function initializeContentLibrary(options = {}) {
   // Make sure shouldDeferAlloyProcessEventUntilPageViews is set to true by default
   // before evaluated in fullOptions
   options.shouldDeferAlloyProcessEventUntilPageViews =
