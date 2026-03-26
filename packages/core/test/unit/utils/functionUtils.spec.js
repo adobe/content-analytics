@@ -107,21 +107,31 @@ describe("functionUtils", () => {
       expect(fn3).not.toHaveBeenCalled();
     });
 
-    it("should return the original argument", () => {
+    it("should return true when all functions return truthy", () => {
       const fn1 = vi.fn(() => true);
       const fn2 = vi.fn(() => true);
       const arg = { test: "value" };
 
       const result = pipeFnsWhile([fn1, fn2], arg);
 
-      expect(result).toBe(arg);
+      expect(result).toBe(true);
+    });
+
+    it("should return false when a function returns falsy", () => {
+      const fn1 = vi.fn(() => true);
+      const fn2 = vi.fn(() => false);
+      const arg = { test: "value" };
+
+      const result = pipeFnsWhile([fn1, fn2], arg);
+
+      expect(result).toBe(false);
     });
 
     it("should work with empty function array", () => {
       const arg = { test: "value" };
       const result = pipeFnsWhile([], arg);
 
-      expect(result).toBe(arg);
+      expect(result).toBe(true);
     });
   });
 });

@@ -1,6 +1,6 @@
 {
   "name": "@adobe/content-analytics",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Adobe Content Analytics Library - Standardized collection of content interactions for reporting",
   "main": "index.js",

@@ -57,7 +57,9 @@ export default class TrackExperienceAssets {
   isExcludedAsset(assetSource) {
     if (!assetSource) return false;
     if (this.assetUrlQualifier) {
-      if (!this.assetUrlQualifier.test(assetSource)) {
+      const flags = this.assetUrlQualifier.flags.replace("g", "");
+      const qualifier = new RegExp(this.assetUrlQualifier.source, flags);
+      if (!qualifier.test(assetSource)) {
         return true;
       }
     }
