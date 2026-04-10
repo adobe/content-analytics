@@ -96,6 +96,20 @@ describe("AlloyContentEvent", () => {
       );
     });
 
+    it("should include channel and idSource in xdm payload", () => {
+      alloyContentEvent.sendContentEvent({});
+
+      expect(mockAlloy).toHaveBeenCalledWith(
+        "sendEvent",
+        expect.objectContaining({
+          xdm: expect.objectContaining({
+            channel: "web",
+            idSource: "ContentAnalytics",
+          }),
+        }),
+      );
+    });
+
     it("should not throw when alloy instance not found", () => {
       delete window.alloy;
 
