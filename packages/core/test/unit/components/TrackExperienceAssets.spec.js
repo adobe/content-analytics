@@ -100,7 +100,7 @@ describe("TrackExperienceAssets", () => {
       expect(result).toBeUndefined();
     });
 
-    it("should return asset object for valid URL", () => {
+    it("should return asset object for valid absolute URL", () => {
       const result = assets.getAssetDimensions(
         mockElement,
         "https://example.com/image.jpg",
@@ -108,6 +108,22 @@ describe("TrackExperienceAssets", () => {
 
       expect(result).toBeDefined();
       expect(result.assetID).toBe("https://example.com/image.jpg");
+    });
+
+    it("should resolve relative URLs against window.location", () => {
+      const result = assets.getAssetDimensions(
+        mockElement,
+        "/content/dam/images/photo.jpg",
+      );
+
+      expect(result).toBeDefined();
+      expect(result.assetID).toContain("/content/dam/images/photo.jpg");
+    });
+
+    it("should return undefined for URLs with no pathname", () => {
+      const result = assets.getAssetDimensions(mockElement, "/");
+
+      expect(result).toBeUndefined();
     });
 
     it("should include dimensions when enabled", () => {

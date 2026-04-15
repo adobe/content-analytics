@@ -33,6 +33,7 @@ export default class TrackExperienceAssets {
     assetDisplayDimensionsCollectionEnabled,
     assetLinkURLCollectionEnabled,
     assetUrlQualifier,
+    permanentlyBlockedURLs,
   }) {
     this.htmlBlockAttributeName = htmlBlockAttributeName;
     this.assetAbsolutePositionCollectionEnabled =
@@ -48,6 +49,7 @@ export default class TrackExperienceAssets {
     this.assetsViewsKeySet = new Set();
     this.assetsMap = {};
     this.assetUrlQualifier = assetUrlQualifier;
+    this.permanentlyBlockedURLs = permanentlyBlockedURLs || [];
   }
 
   onAssetsLengthExceeded(fn) {
@@ -56,6 +58,13 @@ export default class TrackExperienceAssets {
 
   isExcludedAsset(assetSource) {
     if (!assetSource) return false;
+    if (
+      this.permanentlyBlockedURLs.some((blocked) =>
+        assetSource.includes(blocked),
+      )
+    ) {
+      return true;
+    }
     if (this.assetUrlQualifier) {
       if (!this.assetUrlQualifier.test(assetSource)) {
         return true;
@@ -76,15 +85,13 @@ export default class TrackExperienceAssets {
     const asset = {};
 
     // We don't send both assetID and assetSource since they are the same.
-    // Asset ID
-    if (assetSource.startsWith("https://")) {
+    // Asset ID — use window.location as base to resolve relative URLs
+    try {
       const srcURL = new URL(assetSource, window.location);
       if (!urlHasPathname(srcURL)) return;
       asset.assetID = srcURL.href.trim();
-    } else {
-      const srcURL = new URL(assetSource);
-      if (!urlHasPathname(srcURL)) return;
-      asset.assetID = srcURL.href.trim();
+    } catch (e) {
+      return;
     }
 
     // Asset HTML Path

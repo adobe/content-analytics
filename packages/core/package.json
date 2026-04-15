@@ -1,7 +1,7 @@
 {
   "name": "@adobe/content-analytics-core",
   "version": "1.0.0",
-  "description": "Adobe Content Analytics Core (Internal Package)",
+  "description": "Adobe Content Analytics Core",
   "type": "module",
   "private": true,
   "repository": {

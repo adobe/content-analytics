@@ -24,21 +24,24 @@ import { stringToRegex } from "../utils/contentUtils.js";
 // Make sure monitors are initialized
 window.__alloyMonitors = window.__alloyMonitors || [];
 
-// Add callback to monitor for alloy events to forward to ACA
-window.__alloyMonitors.push({
-  onBeforeCommand(data) {
-    if (
-      data?.commandName === "sendEvent" &&
-      data?.options?.xdm?.eventType !== "content.contentEngagement"
-    ) {
-      logDebug("onBeforeCommand FW event to ACA", data);
-      window.adobeContentAnalytics?.forwardEvent(data.options);
-    }
-  },
-});
+// Add callback to monitor for alloy events to forward to ACA — only once per page
+if (!window.__acaMonitorRegistered) {
+  window.__acaMonitorRegistered = true;
+  window.__alloyMonitors.push({
+    onBeforeCommand(data) {
+      if (
+        data?.commandName === "sendEvent" &&
+        data?.options?.xdm?.eventType !== "content.contentEngagement"
+      ) {
+        logDebug("onBeforeCommand FW event to ACA", data);
+        window.adobeContentAnalytics?.forwardEvent(data.options);
+      }
+    },
+  });
+}
 
 const init = (options) => {
-  const instanceName = window.__alloyNS[0] || "alloy";
+  const instanceName = window.__alloyNS?.[0] || "alloy";
   if (!window[instanceName]) {
     logWarn(
       `Alloy instance '${instanceName}' not initialized, cannot configure content analytics`,
@@ -103,16 +106,14 @@ const buildExperienceConfigurations = (configurations) => {
 };
 
 export default function initializeContentLibrary(options) {
-  // Make sure shouldDeferAlloyProcessEventUntilPageViews is set to true by default
-  // before evaluated in fullOptions
-  options.shouldDeferAlloyProcessEventUntilPageViews =
+  const shouldDeferAlloyProcessEventUntilPageViews =
     options.shouldDeferAlloyProcessEventUntilPageViews ?? true;
 
   const fullOptions = {
     datastreamId: options.datastreamId,
     // this will be deprecated, rely on html path
     htmlBlockAttributeName: options.htmlBlockAttributeName || "data-block-name",
-    htmlPathCollectionEnabled: options.htmlPathCollectionEnabled || true,
+    htmlPathCollectionEnabled: options.htmlPathCollectionEnabled ?? true,
     htmlPathAttributes: options.htmlPathAttributes || [
       "class",
       "role",
@@ -120,19 +121,21 @@ export default function initializeContentLibrary(options) {
     ],
     htmlPathDepth: options.htmlPathDepth || 25,
     assetAbsolutePositionCollectionEnabled:
-      options.assetAbsolutePositionCollectionEnabled || true,
+      options.assetAbsolutePositionCollectionEnabled ?? true,
     assetDisplayDimensionsCollectionEnabled:
-      options.assetDisplayDimensionsCollectionEnabled || true,
+      options.assetDisplayDimensionsCollectionEnabled ?? true,
     assetLinkURLCollectionEnabled:
-      options.assetLinkURLCollectionEnabled || true,
+      options.assetLinkURLCollectionEnabled ?? true,
     assetsMaxBatchLength: options.assetsMaxBatchLength || 32,
     imagesSelector: options.imagesSelector || "img",
-    debounceNodeRegister: options.debounceNodeRegister || 500,
-    throttleSendContentEvent: options.throttleSendContentEvent || 500,
+    backgroundImageDataAttribute:
+      options.backgroundImageDataAttribute || "data-info",
+    debounceNodeRegister: options.debounceNodeRegister ?? 500,
+    throttleSendContentEvent: options.throttleSendContentEvent ?? 500,
     sendContentEventBefore:
       options.sendContentEventBefore ||
       ((content) => {
-        if (!options.shouldDeferAlloyProcessEventUntilPageViews) {
+        if (!shouldDeferAlloyProcessEventUntilPageViews) {
           return true;
         }
         // don't send ACA event before pageViews
@@ -146,13 +149,17 @@ export default function initializeContentLibrary(options) {
     deferAlloyProcessEventUntil:
       options.deferAlloyProcessEventUntil ||
       ((content) => {
-        if (options.shouldDeferAlloyProcessEventUntilPageViews) {
+        if (shouldDeferAlloyProcessEventUntilPageViews) {
           return content?.xdm?.eventType === "web.webpagedetails.pageViews";
         }
         return true;
       }),
     excludeURLsFromTracking: options.excludeURLsFromTracking || [],
-    scrollDepthCollectionEnabled: options.scrollDepthCollectionEnabled || true,
+    permanentlyBlockedURLs: [
+      "maps.googleapis.com",
+      "mapsresources-pa.googleapis.com",
+    ],
+    scrollDepthCollectionEnabled: options.scrollDepthCollectionEnabled ?? true,
     assetUrlQualifier: stringToRegex(options.assetUrlQualifier),
     pageUrlQualifier: stringToRegex(options.pageUrlQualifier),
     experienceConfigurations: buildExperienceConfigurations(
