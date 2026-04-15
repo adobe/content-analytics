@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-export const LIB_VERSION = "1.0.0";
+export const LIB_VERSION = "1.0.52";
 
 // Loggers
 let debugEnabled = false;
