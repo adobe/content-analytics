@@ -26,6 +26,8 @@ export default class AlloyContentEvent {
         com_adobe_target: { enabled: false },
       },
       xdm: {
+        channel: "web",
+        idSource: "ContentAnalytics",
         ...xdm,
         ...contentPayload,
         eventType: "content.contentEngagement",

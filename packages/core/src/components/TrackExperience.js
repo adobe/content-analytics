@@ -21,11 +21,13 @@ export default class TrackExperience {
   constructor({
     scrollDepthCollectionEnabled,
     pageUrlQualifier,
+    excludeURLsFromTracking,
     includeExperiences,
     experienceConfigurations,
   }) {
     this.scrollDepthCollectionEnabled = scrollDepthCollectionEnabled;
     this.pageUrlQualifier = pageUrlQualifier;
+    this.excludeURLsFromTracking = excludeURLsFromTracking;
     this.includeExperiences = includeExperiences;
     this.experienceConfigurations = experienceConfigurations;
 
@@ -70,13 +72,23 @@ export default class TrackExperience {
   }
 
   get shouldExclude() {
+    const url = this.experienceID.value;
+
+    if (
+      this.excludeURLsFromTracking?.length &&
+      this.excludeURLsFromTracking.some((excluded) => url.startsWith(excluded))
+    ) {
+      logDebug("Excluded URL from tracking", url);
+      return true;
+    }
+
     if (!this.pageUrlQualifier) {
       return false;
     }
     // Exclude experience if pageUrlQualifier is set and experienceID does not match
-    const isExcluded = !this.pageUrlQualifier.test(this.experienceID.value);
+    const isExcluded = !this.pageUrlQualifier.test(url);
     if (isExcluded) {
-      logDebug("Excluded experience from collection", this.experienceID.value);
+      logDebug("Excluded experience from collection", url);
     }
     return isExcluded;
   }

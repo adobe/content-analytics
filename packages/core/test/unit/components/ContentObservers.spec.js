@@ -37,7 +37,11 @@ describe("ContentObservers", () => {
 
     contentObservers = new ContentObservers(
       { experience: mockExperience, assets: mockAssets },
-      { imagesSelector: "img", debounceNodeRegister: 0 },
+      {
+        imagesSelector: "img",
+        debounceNodeRegister: 0,
+        backgroundImageDataAttribute: "data-info",
+      },
     );
   });
 
@@ -53,6 +57,10 @@ describe("ContentObservers", () => {
 
     it("should set images selector", () => {
       expect(contentObservers.imagesSelector).toBe("img");
+    });
+
+    it("should store backgroundImageDataAttribute", () => {
+      expect(contentObservers.backgroundImageDataAttribute).toBe("data-info");
     });
 
     it("should initialize observers", () => {
@@ -199,6 +207,115 @@ describe("ContentObservers", () => {
       const url = contentObservers.getBackgroundAssetURLFromTarget(div);
 
       expect(url).toBeUndefined();
+    });
+
+    it("should return data-info sd.s as the canonical URL", () => {
+      const div = document.createElement("div");
+      div.setAttribute(
+        "data-info",
+        JSON.stringify({
+          sd: { s: "/content/dam/image.jpg", c: "0:1200", r: 0 },
+          wm: "720",
+        }),
+      );
+      div.style.backgroundImage =
+        'url("/content/dam/image.jpg?crop=0:1200;*,*&downsize=1800:*")';
+
+      const url = contentObservers.getBackgroundAssetURLFromTarget(div);
+
+      expect(url).toBe("/content/dam/image.jpg");
+    });
+
+    it("should fall back to CSS background-image URL when no data-info", () => {
+      const div = document.createElement("div");
+      vi.spyOn(window, "getComputedStyle").mockReturnValueOnce({
+        backgroundImage: 'url("https://example.com/image.jpg")',
+      });
+
+      const url = contentObservers.getBackgroundAssetURLFromTarget(div);
+
+      expect(url).toBe("https://example.com/image.jpg");
+    });
+
+    it("should fall back to CSS URL when data-info has no sd.s", () => {
+      const div = document.createElement("div");
+      div.setAttribute("data-info", JSON.stringify({ wm: "720" }));
+      vi.spyOn(window, "getComputedStyle").mockReturnValueOnce({
+        backgroundImage: 'url("https://example.com/fallback.jpg")',
+      });
+
+      const url = contentObservers.getBackgroundAssetURLFromTarget(div);
+
+      expect(url).toBe("https://example.com/fallback.jpg");
+    });
+
+    it("should fall back to CSS URL when data-info is invalid JSON", () => {
+      const div = document.createElement("div");
+      div.setAttribute("data-info", "not-valid-json");
+      vi.spyOn(window, "getComputedStyle").mockReturnValueOnce({
+        backgroundImage: 'url("https://example.com/fallback.jpg")',
+      });
+
+      const url = contentObservers.getBackgroundAssetURLFromTarget(div);
+
+      expect(url).toBe("https://example.com/fallback.jpg");
+    });
+
+    it("should use custom backgroundImageDataAttribute", () => {
+      const customObservers = new ContentObservers(
+        { experience: mockExperience, assets: mockAssets },
+        {
+          imagesSelector: "img",
+          debounceNodeRegister: 0,
+          backgroundImageDataAttribute: "data-custom",
+        },
+      );
+      const div = document.createElement("div");
+      div.setAttribute(
+        "data-custom",
+        JSON.stringify({ sd: { s: "/content/dam/custom.jpg" } }),
+      );
+
+      const url = customObservers.getBackgroundAssetURLFromTarget(div);
+      customObservers.cleanupObservers();
+
+      expect(url).toBe("/content/dam/custom.jpg");
+    });
+  });
+
+  describe("findImagesInClickedElement background images", () => {
+    it("should use canonical data-info URL for background image clicks", () => {
+      const parent = document.createElement("div");
+      const child = document.createElement("div");
+      child.setAttribute(
+        "data-info",
+        JSON.stringify({ sd: { s: "/content/dam/canonical.jpg" } }),
+      );
+      parent.appendChild(child);
+
+      // happy-dom doesn't apply inline styles via getComputedStyle for unattached elements
+      vi.spyOn(window, "getComputedStyle").mockImplementation((el) => {
+        if (el === child) {
+          return { backgroundImage: 'url("/content/dam/canonical.jpg?crop=0:100")' };
+        }
+        return { backgroundImage: "none" };
+      });
+
+      child.getBoundingClientRect = () => ({
+        left: 0,
+        right: 200,
+        top: 0,
+        bottom: 200,
+      });
+
+      const event = { clientX: 100, clientY: 100 };
+      const found = contentObservers.findImagesInClickedElement(parent, event);
+
+      vi.restoreAllMocks();
+
+      const bgImages = found.filter((f) => f.type === "child-background");
+      expect(bgImages.length).toBeGreaterThan(0);
+      expect(bgImages[0].src).toBe("/content/dam/canonical.jpg");
     });
   });
 });

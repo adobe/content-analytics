@@ -38,6 +38,17 @@ export const getElementBackgroundImage = (element) =>
 
 export const isSrcBase64 = (src) => src.startsWith("data:image/");
 
+export const getElementDataInfoSrc = (element, attribute = "data-info") => {
+  const dataInfo = element.getAttribute(attribute);
+  if (!dataInfo) return undefined;
+  try {
+    const parsed = JSON.parse(dataInfo);
+    return parsed?.sd?.s || undefined;
+  } catch (e) {
+    return undefined;
+  }
+};
+
 export const isSrcSVG = (src) => src.endsWith(".svg");
 
 export const urlHasPathname = (url) => url.pathname && url.pathname !== "/";
