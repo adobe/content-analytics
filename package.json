@@ -32,6 +32,17 @@
     "type": "git",
     "url": "git+https://github.com/adobe/content-analytics.git"
   },
+  "homepage": "https://github.com/adobe/content-analytics#readme",
+  "bugs": "https://github.com/adobe/content-analytics/issues",
+  "keywords": [
+    "adobe",
+    "content-analytics",
+    "aep",
+    "alloy",
+    "tracking",
+    "analytics",
+    "experience-platform"
+  ],
   "author": "Adobe Inc.",
   "license": "Apache-2.0",
   "publishConfig": {
@@ -43,6 +54,7 @@
     "@babel/plugin-transform-modules-commonjs": "^7.27.1",
     "@babel/plugin-transform-template-literals": "^7.27.1",
     "@babel/preset-env": "^7.28.5",
+    "@playwright/test": "^1.59.1",
     "@rollup/plugin-babel": "^6.1.0",
     "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-node-resolve": "^16.0.3",

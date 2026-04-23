@@ -25,19 +25,13 @@ export const throttle = (callbackFn, limit) => {
 };
 
 /**
- * Pipe functions while condition is true
+ * Pipe functions while condition is true; stops when a function returns falsy.
  * @param {Array<Function>} fns
  * @param {any} arg
- * @returns {any}
+ * @returns {boolean} Result of Array.prototype.every (whether all invoked functions returned truthy)
  */
 export const pipeFnsWhile = (fns, arg) => {
-  return [...fns].reduce((acc, fn, i, arr) => {
-    const result = fn(arg);
-    if (!result) {
-      arr.splice(i + 1); // Remove remaining functions from current position onwards
-    }
-    return acc;
-  }, arg);
+  return fns.every((fn) => fn(arg));
 };
 
 export const debounce = (fn, delay) => {

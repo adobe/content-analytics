@@ -78,22 +78,27 @@ export const getExperienceID = (url, { experienceConfigurations }) => {
   experienceID.searchParams.set("expVer", experienceVersion);
   // Filter out query params based on experience configurations
   if (experienceConfigurations) {
-    if (experienceConfigurations.regEx !== undefined) {
-      const allowedQueryParams = new Set();
-      experienceConfigurations.forEach((config) => {
-        if (config.regEx.test(url)) {
-          config.paramsArray.forEach((param) => allowedQueryParams.add(param));
-        }
-      });
-      allowedQueryParams.add("expVer");
+    const allowedQueryParams = new Set();
+    let allowAllQueryParams = false;
+    experienceConfigurations.forEach((config) => {
+      if (config.regEx.test(url)) {
+        config.paramsArray.forEach((param) => {
+          if (param === ".*") {
+            allowAllQueryParams = true;
+          } else {
+            allowedQueryParams.add(param);
+          }
+        });
+      }
+    });
+    allowedQueryParams.add("expVer");
 
-      const queryParams = new URLSearchParams(experienceID.search);
-      const filteredQParams = Array.from(queryParams).filter(([key]) =>
-        allowedQueryParams.has(key),
-      );
+    const queryParams = new URLSearchParams(experienceID.search);
+    const filteredQParams = allowAllQueryParams
+      ? Array.from(queryParams)
+      : Array.from(queryParams).filter(([key]) => allowedQueryParams.has(key));
 
-      experienceID.search = new URLSearchParams(filteredQParams).toString();
-    }
+    experienceID.search = new URLSearchParams(filteredQParams).toString();
 
     return experienceID.href;
   }
