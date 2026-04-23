@@ -17,6 +17,7 @@ import {
   isImageLoaded,
   isBackgroundImageElement,
   getElementBackgroundImage,
+  getElementDataInfoSrc,
   getElementSrc,
   srcURLChecker,
 } from "../utils/domUtils.js";
@@ -24,10 +25,11 @@ import {
 export default class ContentObservers {
   constructor(
     { experience, assets },
-    { imagesSelector, debounceNodeRegister },
+    { imagesSelector, debounceNodeRegister, backgroundImageDataAttribute },
   ) {
     this.experience = experience;
     this.assets = assets;
+    this.backgroundImageDataAttribute = backgroundImageDataAttribute;
     document.addEventListener("click", this.onClick.bind(this), true);
     if (debounceNodeRegister) {
       logDebug(
@@ -159,7 +161,14 @@ export default class ContentObservers {
   }
 
   getBackgroundAssetURLFromTarget(target) {
-    if (!target) return undefined;
+    // Prefer the canonical source URL from a data attribute (e.g. data-info.sd.s)
+    // over the potentially cropped/resized URL in the background-image CSS property.
+    const dataInfoSrc = getElementDataInfoSrc(
+      target,
+      this.backgroundImageDataAttribute,
+    );
+    if (dataInfoSrc) return dataInfoSrc;
+
     const prop = getElementBackgroundImage(target);
     const match = srcURLChecker.exec(prop);
     if (match) {
@@ -344,7 +353,7 @@ export default class ContentObservers {
         foundImages.push({
           element: bgImg.node,
           type: "child-background",
-          src: bgImg.assetURL,
+          src: this.getBackgroundAssetURLFromTarget(bgImg.node),
         });
       }
     });
@@ -361,7 +370,7 @@ export default class ContentObservers {
         foundImages.push({
           element: shadowBgImg.node,
           type: "shadow-child-background",
-          src: shadowBgImg.assetURL,
+          src: this.getBackgroundAssetURLFromTarget(shadowBgImg.node),
         });
       }
     });
