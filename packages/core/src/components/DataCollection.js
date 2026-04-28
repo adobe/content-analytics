@@ -11,8 +11,11 @@ governing permissions and limitations under the License.
 */
 
 import { logDebug } from "../constants/index.js";
-import { throttle, deepCopy } from "../utils/functionUtils.js";
+import { throttle, deepCopy, getPayloadBytes } from "../utils/functionUtils.js";
 import { LIB_VERSION } from "../constants/index.js";
+
+// Reserve ~512 bytes for the alloy wrapper fields (xdm envelope, documentUnloading, etc.)
+const MAX_PAYLOAD_BYTES = 50 * 1024 - 512;
 
 export default class DataCollection {
   constructor(
@@ -38,12 +41,68 @@ export default class DataCollection {
   }
 
   sendContentEvent(xdm = {}) {
-    if (this.shouldTrack) {
-      this.alloyContentEvent.sendContentEvent(this.track, xdm);
-      this.resetMetrics();
-      return true;
+    if (!this.shouldTrack) return false;
+
+    let isFirstBatch = true;
+
+    do {
+      const assets = this.assets.track;
+      const track = this.buildTrack(assets);
+
+      if (getPayloadBytes(track) <= MAX_PAYLOAD_BYTES) {
+        this.alloyContentEvent.sendContentEvent(
+          track,
+          isFirstBatch ? xdm : {},
+        );
+        this.resetMetrics();
+      } else {
+        // Binary-search for the largest asset slice that fits within the limit.
+        // Force at least 1 asset to guarantee progress even if a single asset
+        // somehow exceeds the limit on its own.
+        const count = Math.max(1, this.findFittingAssetCount(assets));
+        logDebug(
+          `Payload exceeds ${MAX_PAYLOAD_BYTES} bytes, splitting at ${count} of ${assets.length} assets`,
+        );
+        this.alloyContentEvent.sendContentEvent(
+          this.buildTrack(assets.slice(0, count)),
+          isFirstBatch ? xdm : {},
+        );
+        this.assets.partialResetMetrics(count);
+        if (isFirstBatch) this.experience.resetMetrics();
+      }
+
+      isFirstBatch = false;
+    } while (this.shouldTrack);
+
+    return true;
+  }
+
+  // Binary search: largest asset count whose serialised payload is ≤ MAX_PAYLOAD_BYTES.
+  findFittingAssetCount(assets) {
+    let lo = 0;
+    let hi = assets.length;
+    while (lo < hi) {
+      const mid = lo + Math.ceil((hi - lo) / 2);
+      if (
+        getPayloadBytes(this.buildTrack(assets.slice(0, mid))) <=
+        MAX_PAYLOAD_BYTES
+      ) {
+        lo = mid;
+      } else {
+        hi = mid - 1;
+      }
     }
-    return false;
+    return lo;
+  }
+
+  buildTrack(assets) {
+    return {
+      experienceContent: {
+        ...(this.shouldTrackExperience && { experience: this.experience.track }),
+        ...(assets.length > 0 && { assets }),
+        implementationDetails: { version: LIB_VERSION },
+      },
+    };
   }
 
   registerPageListeners() {
@@ -106,17 +165,7 @@ export default class DataCollection {
   }
 
   get track() {
-    const payload = {
-      experienceContent: {
-        ...(this.shouldTrackExperience && {
-          experience: this.experience.track,
-        }),
-        ...(this.shouldTrackAssets && { assets: this.assets.track }),
-        implementationDetails: { version: LIB_VERSION },
-      },
-    };
-
-    return deepCopy(payload);
+    return deepCopy(this.buildTrack(this.assets.track));
   }
 
   get shouldTrackExperience() {
@@ -128,6 +177,7 @@ export default class DataCollection {
   }
 
   get shouldTrack() {
+    if (this.experience.shouldExclude) return false;
     return this.experience.shouldTrack || this.assets.shouldTrack;
   }
 }

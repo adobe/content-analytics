@@ -77,26 +77,27 @@ export const getExperienceID = (url, { experienceConfigurations }) => {
   }
   experienceID.searchParams.set("expVer", experienceVersion);
   // Filter out query params based on experience configurations
-  if (experienceConfigurations) {
-    if (experienceConfigurations.regEx !== undefined) {
-      const allowedQueryParams = new Set();
-      experienceConfigurations.forEach((config) => {
-        if (config.regEx.test(url)) {
-          config.paramsArray.forEach((param) => allowedQueryParams.add(param));
-        }
-      });
-      allowedQueryParams.add("expVer");
+  if (
+    Array.isArray(experienceConfigurations) &&
+    experienceConfigurations.length > 0
+  ) {
+    const allowedQueryParams = new Set();
+    experienceConfigurations.forEach((config) => {
+      if (config.regEx.test(url)) {
+        config.paramsArray.forEach((param) => allowedQueryParams.add(param));
+      }
+    });
+    allowedQueryParams.add("expVer");
 
-      const queryParams = new URLSearchParams(experienceID.search);
-      const filteredQParams = Array.from(queryParams).filter(([key]) =>
-        allowedQueryParams.has(key),
-      );
+    const queryParams = new URLSearchParams(experienceID.search);
+    const filteredQParams = Array.from(queryParams).filter(([key]) =>
+      allowedQueryParams.has(key),
+    );
 
-      experienceID.search = new URLSearchParams(filteredQParams).toString();
-    }
-
-    return experienceID.href;
+    experienceID.search = new URLSearchParams(filteredQParams).toString();
   }
+
+  return experienceID.href;
 };
 
 export const getElementHTMLPath = (element, depth = 25, _attributes = []) => {

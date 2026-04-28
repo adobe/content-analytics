@@ -126,7 +126,7 @@ export default function initializeContentLibrary(options) {
       options.assetDisplayDimensionsCollectionEnabled ?? true,
     assetLinkURLCollectionEnabled:
       options.assetLinkURLCollectionEnabled ?? true,
-    assetsMaxBatchLength: options.assetsMaxBatchLength || 32,
+    assetsMaxBatchLength: options.assetsMaxBatchLength,
     imagesSelector: options.imagesSelector || "img",
     backgroundImageDataAttribute:
       options.backgroundImageDataAttribute || "data-info",
