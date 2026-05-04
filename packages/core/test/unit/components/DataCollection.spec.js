@@ -24,11 +24,17 @@ describe("DataCollection", () => {
   let mockContentObservers;
 
   beforeEach(() => {
+    // resetMetrics flips shouldTrack off so DataCollection.sendContentEvent's
+    // `do { ... } while (this.shouldTrack)` loop terminates. Without this the
+    // test worker spins until OOM. Production resets behave the same way:
+    // they zero out the metrics that drive shouldTrack.
     mockExperience = {
       shouldTrack: true,
       track: { experienceViews: { value: 1 } },
       reset: vi.fn(),
-      resetMetrics: vi.fn(),
+      resetMetrics: vi.fn(() => {
+        mockExperience.shouldTrack = false;
+      }),
       isDifferent: vi.fn().mockReturnValue(false),
     };
 
@@ -36,7 +42,9 @@ describe("DataCollection", () => {
       shouldTrack: true,
       track: [{ assetID: "test.jpg" }],
       reset: vi.fn(),
-      resetMetrics: vi.fn(),
+      resetMetrics: vi.fn(() => {
+        mockAssets.shouldTrack = false;
+      }),
       onAssetsLengthExceeded: vi.fn(),
     };
 

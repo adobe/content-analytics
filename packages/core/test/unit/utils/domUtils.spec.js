@@ -14,8 +14,82 @@ governing permissions and limitations under the License.
  * @vitest-environment happy-dom
  */
 
-import { describe, it, expect } from "vitest";
-import { getElementDataInfoSrc } from "../../../src/utils/domUtils.js";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import {
+  getElementDataInfoSrc,
+  getElementSrc,
+} from "../../../src/utils/domUtils.js";
+
+describe("getElementSrc", () => {
+  const ORIGINAL_URL = "http://localhost/";
+
+  beforeEach(() => {
+    window.happyDOM.setURL(
+      "https://www.example.com/microtel/rooms-rates?brand_id=ALL&adults=2",
+    );
+  });
+
+  afterEach(() => {
+    window.happyDOM.setURL(ORIGINAL_URL);
+  });
+
+  it("returns undefined when src exactly equals the page URL", () => {
+    const img = document.createElement("img");
+    img.src =
+      "https://www.example.com/microtel/rooms-rates?brand_id=ALL&adults=2";
+
+    expect(getElementSrc(img)).toBeUndefined();
+  });
+
+  it("returns undefined when src matches origin+pathname but query string differs", () => {
+    const img = document.createElement("img");
+    img.src =
+      "https://www.example.com/microtel/rooms-rates?checkInDate=04/24/2026";
+
+    expect(getElementSrc(img)).toBeUndefined();
+  });
+
+  it("returns undefined when src matches origin+pathname but has a fragment", () => {
+    const img = document.createElement("img");
+    img.src = "https://www.example.com/microtel/rooms-rates#booking";
+
+    expect(getElementSrc(img)).toBeUndefined();
+  });
+
+  it("returns undefined for an <img> with empty src attribute", () => {
+    const img = document.createElement("img");
+    img.setAttribute("src", "");
+
+    expect(getElementSrc(img)).toBeUndefined();
+  });
+
+  it("returns the src for a legitimate image URL", () => {
+    const img = document.createElement("img");
+    img.src = "https://cdn.example.com/photo.jpg";
+
+    expect(getElementSrc(img)).toBe("https://cdn.example.com/photo.jpg");
+  });
+
+  it("returns the src for a CDN image without an extension", () => {
+    const img = document.createElement("img");
+    img.src = "https://cdn.example.com/img/abc123";
+
+    expect(getElementSrc(img)).toBe("https://cdn.example.com/img/abc123");
+  });
+
+  // Regression: real-world failure observed on Wyndham. Page has a fragment;
+  // <img src=""> resolves to the page URL minus the fragment, so an exact-href
+  // comparison missed it. The origin+pathname guard catches it.
+  it("returns undefined when src is empty and page URL has a fragment", () => {
+    window.happyDOM.setURL(
+      "https://www.wyndhamhotels.com/es-xl/baymont/phoenix-arizona/baymont-inn-suites-phoenix-i-10-near-51st-ave/rooms-rates?lightbox=/content/whg-ecomm-responsive/es-la/whg/about-us/privacy-notice-more-info.display.html#photo-gallery-carousel562",
+    );
+    const img = document.createElement("img");
+    img.setAttribute("src", "");
+
+    expect(getElementSrc(img)).toBeUndefined();
+  });
+});
 
 describe("getElementDataInfoSrc", () => {
   it("should return sd.s from a valid data-info attribute", () => {

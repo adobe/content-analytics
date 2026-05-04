@@ -23,12 +23,34 @@ export const isImageElement = (element) => element.tagName === "IMG";
 // https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/complete
 export const isImageLoaded = (element) => element.complete;
 
-export const getElementSrc = (element) => {
-  const src = element.currentSrc || element.src || element.getAttribute("src");
-  return src === window.location.href ? undefined : src;
+// True when `src` resolves to the same origin+pathname as the current page,
+// regardless of query string or fragment. Used to reject `<img>` elements whose
+// resolved URL is the page itself (e.g. empty src, or src set against a stale
+// SPA route) — those would otherwise be reported as image assets.
+export const resolvesToPageURL = (src) => {
+  try {
+    const resolved = new URL(src, window.location.href);
+    return (
+      resolved.origin === window.location.origin &&
+      resolved.pathname === window.location.pathname
+    );
+  } catch {
+    return false;
+  }
 };
 
-export const srcURLChecker = /url\(\s*?['"]?\s*?(\S+?)\s*?["']?\s*?\)/i;
+export const getElementSrc = (element) => {
+  const src = element.currentSrc || element.src || element.getAttribute("src");
+  if (!src) return undefined;
+  return resolvesToPageURL(src) ? undefined : src;
+};
+
+// Extracts the URL from a CSS `url(...)` value. Capture requires at least one
+// character that isn't whitespace, quote, or paren — so empty `url()` and
+// `url("")` correctly fail to match instead of yielding a stray `"` (AN-442415:
+// those cases produced phantom asset entries that resolved against the page
+// URL to e.g. `<page-pathname-stripped>/%22`).
+export const srcURLChecker = /url\(\s*['"]?([^\s'"()]+)['"]?\s*\)/i;
 
 export const isBackgroundImageElement = (element) =>
   getElementBackgroundImage(element) !== "none";

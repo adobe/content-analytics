@@ -16,6 +16,7 @@ import {
   isSrcBase64,
   isSrcSVG,
   urlHasPathname,
+  resolvesToPageURL,
   getElementDisplayHeight,
   getElementDisplayWidth,
   getElementAbsoluteOffset,
@@ -97,6 +98,10 @@ export default class TrackExperienceAssets {
     try {
       const srcURL = new URL(assetSource, window.location);
       if (!urlHasPathname(srcURL)) return;
+      if (resolvesToPageURL(assetSource)) {
+        logDebug("Rejected asset matching page URL", assetSource);
+        return;
+      }
       asset.assetID = srcURL.href.trim();
     } catch (e) {
       return;
