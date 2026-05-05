@@ -14,7 +14,7 @@ governing permissions and limitations under the License.
  * @vitest-environment happy-dom
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import TrackExperienceAssets from "../../../src/components/TrackExperienceAssets.js";
 
 describe("TrackExperienceAssets", () => {
@@ -124,6 +124,38 @@ describe("TrackExperienceAssets", () => {
       const result = assets.getAssetDimensions(mockElement, "/");
 
       expect(result).toBeUndefined();
+    });
+
+    describe("page-URL rejection (AN-442415)", () => {
+      const ORIGINAL_URL = "http://localhost/";
+      const PAGE_URL =
+        "https://www.example.com/microtel/rooms-rates?brand_id=ALL&adults=2";
+
+      beforeEach(() => {
+        window.happyDOM.setURL(PAGE_URL);
+      });
+
+      afterEach(() => {
+        window.happyDOM.setURL(ORIGINAL_URL);
+      });
+
+      it("returns undefined when assetSource is the current page URL", () => {
+        const result = assets.getAssetDimensions(mockElement, PAGE_URL);
+        expect(result).toBeUndefined();
+      });
+
+      it("returns undefined when assetSource matches origin+pathname with different query string", () => {
+        const result = assets.getAssetDimensions(
+          mockElement,
+          "https://www.example.com/microtel/rooms-rates?checkInDate=04/24/2026",
+        );
+        expect(result).toBeUndefined();
+      });
+
+      it("returns undefined when assetSource is an empty string", () => {
+        const result = assets.getAssetDimensions(mockElement, "");
+        expect(result).toBeUndefined();
+      });
     });
 
     it("should include dimensions when enabled", () => {

@@ -60,3 +60,6 @@ export const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
 export const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 export const clampPercentage = (value) => clamp(value, 0, 100);
+
+export const getPayloadBytes = (obj) =>
+  new TextEncoder().encode(JSON.stringify(obj)).length;

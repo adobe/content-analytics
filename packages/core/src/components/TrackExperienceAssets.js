@@ -16,11 +16,18 @@ import {
   isSrcBase64,
   isSrcSVG,
   urlHasPathname,
+  resolvesToPageURL,
   getElementDisplayHeight,
   getElementDisplayWidth,
   getElementAbsoluteOffset,
 } from "../utils/domUtils.js";
 import { getElementHTMLPath, joinHTMLPath } from "../utils/contentUtils.js";
+import { getPayloadBytes } from "../utils/functionUtils.js";
+
+// Trigger a flush when the serialised assets portion approaches the full
+// 50 KB payload limit, leaving headroom for experience data and the alloy
+// request wrapper fields.
+const ASSET_PAYLOAD_FLUSH_THRESHOLD = 48 * 1024;
 
 export default class TrackExperienceAssets {
   constructor({
@@ -41,6 +48,8 @@ export default class TrackExperienceAssets {
     this.htmlPathCollectionEnabled = htmlPathCollectionEnabled;
     this.htmlPathAttributes = htmlPathAttributes;
     this.htmlPathDepth = htmlPathDepth;
+    // Optional legacy count-based limit; if set, fires a flush when the asset
+    // count exceeds this value in addition to the payload-size-based trigger.
     this.assetsMaxBatchLength = assetsMaxBatchLength;
     this.assetDisplayDimensionsCollectionEnabled =
       assetDisplayDimensionsCollectionEnabled;
@@ -91,6 +100,10 @@ export default class TrackExperienceAssets {
     try {
       const srcURL = new URL(assetSource, window.location);
       if (!urlHasPathname(srcURL)) return;
+      if (resolvesToPageURL(assetSource)) {
+        logDebug("Rejected asset matching page URL", assetSource);
+        return;
+      }
       asset.assetID = srcURL.href.trim();
     } catch (e) {
       return;
@@ -173,8 +186,14 @@ export default class TrackExperienceAssets {
     }
     this.assetsMap[assetMapKey].addView(1);
 
-    // Sent content views on max length
-    if (Object.values(this.assetsMap).length > this.assetsMaxBatchLength) {
+    // Flush when the serialised assets payload approaches the 50 KB request
+    // limit, or when the optional legacy count cap is exceeded.
+    const sizeExceeded =
+      getPayloadBytes(this.track) > ASSET_PAYLOAD_FLUSH_THRESHOLD;
+    const countExceeded =
+      this.assetsMaxBatchLength != null &&
+      Object.values(this.assetsMap).length > this.assetsMaxBatchLength;
+    if (sizeExceeded || countExceeded) {
       this.assetsLengthExceededCallbacks.forEach((fn) => fn());
     }
   }
@@ -186,6 +205,15 @@ export default class TrackExperienceAssets {
 
   resetMetrics() {
     this.assetsMap = {};
+  }
+
+  // Remove only the first `count` entries from assetsMap, leaving the rest
+  // for the next request when a payload has been split due to size.
+  partialResetMetrics(count) {
+    const keys = Object.keys(this.assetsMap);
+    for (let i = 0; i < count && i < keys.length; i++) {
+      delete this.assetsMap[keys[i]];
+    }
   }
 
   get track() {
