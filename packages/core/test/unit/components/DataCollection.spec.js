@@ -31,6 +31,7 @@ describe("DataCollection", () => {
     mockExperience = {
       shouldTrack: true,
       track: { experienceViews: { value: 1 } },
+      experienceID: { value: "https://example.com/?expVer=NoVersion" },
       reset: vi.fn(),
       resetMetrics: vi.fn(() => {
         mockExperience.shouldTrack = false;
@@ -164,6 +165,10 @@ describe("DataCollection", () => {
       expect(mockExperience.reset).toHaveBeenCalled();
       expect(mockAssets.reset).toHaveBeenCalled();
       expect(mockContentObservers.registerObservers).toHaveBeenCalledTimes(2);
+      expect(mockContentObservers.registerObservers).toHaveBeenNthCalledWith(
+        2,
+        false,
+      );
     });
   });
 

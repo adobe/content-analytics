@@ -97,9 +97,18 @@ export default class ContentObservers {
         };
   }
 
-  registerObservers() {
-    this.registerImagesIntersectionObserversFromTarget(document.body);
-    this.mutationObserver.observe(document.body, {
+  registerObservers(scanExistingElements = true) {
+    const body = document.body;
+    if (!body) {
+      document.addEventListener("DOMContentLoaded", () => {
+        this.registerObservers(scanExistingElements);
+      });
+      return;
+    }
+    if (scanExistingElements) {
+      this.registerImagesIntersectionObserversFromTarget(body);
+    }
+    this.mutationObserver.observe(body, {
       childList: true,
       subtree: true,
       attributes: true,
@@ -130,6 +139,7 @@ export default class ContentObservers {
   }
 
   getBackgroundImages(target) {
+    if (!target || !target.querySelectorAll) return [];
     const backgroundImages = Array.from(
       Array.from(target.querySelectorAll("*")).reduce((collection, node) => {
         const match = srcURLChecker.exec(getElementBackgroundImage(node));
@@ -167,6 +177,7 @@ export default class ContentObservers {
   }
 
   getShadowDOMElements(target, selector) {
+    if (!target) return [];
     const shadowElements = [];
 
     const traverseShadowDOM = (node) => {
@@ -195,6 +206,7 @@ export default class ContentObservers {
   }
 
   getShadowDOMBackgroundImages(target) {
+    if (!target) return [];
     const shadowBackgroundImages = [];
 
     const traverseShadowDOM = (node) => {
@@ -239,7 +251,7 @@ export default class ContentObservers {
   registerImagesIntersectionObserversFromTarget(target) {
     // filter by node type
     // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType#node.element_node
-    if (target && !(target.nodeType === 1 || target.nodeType === 9)) return;
+    if (!target || !(target.nodeType === 1 || target.nodeType === 9)) return;
     const elements = target.querySelectorAll(this.imagesSelector);
     const backgroundImages = this.getBackgroundImages(target);
 
@@ -269,6 +281,7 @@ export default class ContentObservers {
   }
 
   findImagesInClickedElement(element, clickEvent = null) {
+    if (!element) return [];
     const foundImages = [];
 
     // Check if the direct element is an image
@@ -369,6 +382,7 @@ export default class ContentObservers {
     // TODO: test on Mobile
     if (!event || !event.isTrusted || !event.pointerType) return;
     const target = event.target;
+    if (!target) return;
 
     // experience click
     logDebug("Experience click", { event });
