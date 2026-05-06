@@ -37,7 +37,7 @@ export default class AlloyContentEvent {
     const instanceName = window.__alloyNS[0] || "alloy";
 
     logDebug("Sending content event", alloyPayload);
-    logDebug("ACA payload stringified", JSON.stringify(alloyPayload));
+    logDebug("ACA payload stringified", JSON.stringify(alloyPayload, null, 2));
     if (!window[instanceName]) {
       logWarn(
         `Alloy instance ${instanceName} not found, unable to send content event`,
