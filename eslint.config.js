@@ -49,6 +49,7 @@ export default [
         clearTimeout: "readonly",
         setInterval: "readonly",
         clearInterval: "readonly",
+        TextEncoder: "readonly",
         Intl: "readonly",
         URLSearchParams: "readonly",
         IntersectionObserver: "readonly",
